@@ -1,20 +1,18 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
-import { LibrosModule } from './libros/libros.module';
-import { DocentesModule } from './docentes/docentes.module';
-import { PrestamosModule } from './prestamos/prestamos.module';
-import { RegistrosModule } from './registros/registros.module';
-import { RfidModule } from './rfid/rfid.module';
 import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
+import { AccessModule } from './access/access.module';
+import { BooksModule } from './books/books.module';
+import { LoansModule } from './loans/loans.module';
 
 @Module({
   imports: [
-    LibrosModule,
-    DocentesModule,
-    PrestamosModule,
-    RegistrosModule,
-    RfidModule,
     AuthModule,
+    UsersModule,
+    AccessModule,
+    BooksModule,
+    LoansModule,
   ],
   controllers: [AppController],
 })

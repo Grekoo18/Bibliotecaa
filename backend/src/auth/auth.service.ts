@@ -18,8 +18,9 @@ export class AuthService {
   async login(email: string, password: string) {
     let usuario;
     try {
-      usuario = await this.prisma.usuario.findUnique({
+      usuario = await this.prisma.user.findUnique({
         where: { email: email.trim().toLowerCase() },
+        include: { role: true },
       });
     } catch {
       throw new ServiceUnavailableException(
@@ -38,19 +39,17 @@ export class AuthService {
 
     const payload = {
       sub: usuario.id,
-      rol: usuario.rol,
+      rol: usuario.role.name,
       email: usuario.email,
-      tipoPersona: usuario.tipoPersona,
     };
 
     return {
       access_token: this.jwtService.sign(payload),
       usuario: {
         id: usuario.id,
-        nombre: usuario.nombre,
+        nombre: usuario.name,
         email: usuario.email,
-        rol: usuario.rol,
-        tipoPersona: usuario.tipoPersona,
+        rol: usuario.role.name,
       },
     };
   }
@@ -67,41 +66,39 @@ export class AuthService {
     }
 
     const email = data.email.trim().toLowerCase();
-    const exists = await this.prisma.usuario.findUnique({ where: { email } });
+    const exists = await this.prisma.user.findUnique({ where: { email } });
     if (exists) {
       throw new BadRequestException('Ya existe un usuario con ese correo');
     }
 
-    const allowedPersonTypes = ['CLIENTE', 'ESTUDIANTE', 'PROFESOR'];
-    const tipoPersona = allowedPersonTypes.includes(data.tipoPersona || '')
-      ? data.tipoPersona
-      : 'CLIENTE';
+    const clienteRole = await this.prisma.role.findUnique({ where: { name: 'CLIENTE' } });
+    if (!clienteRole) {
+      throw new ServiceUnavailableException('Falta inicializar roles en la BD');
+    }
     const passwordHash = await bcrypt.hash(data.password, 10);
-    const usuario = await this.prisma.usuario.create({
+    const usuario = await this.prisma.user.create({
       data: {
-        nombre: data.nombre.trim(),
+        name: data.nombre.trim(),
         email,
         password: passwordHash,
-        rol: 'usuario',
-        tipoPersona,
+        roleId: clienteRole.id,
       },
+      include: { role: true },
     });
 
     const payload = {
       sub: usuario.id,
-      rol: usuario.rol,
+      rol: usuario.role.name,
       email: usuario.email,
-      tipoPersona: usuario.tipoPersona,
     };
 
     return {
       access_token: this.jwtService.sign(payload),
       usuario: {
         id: usuario.id,
-        nombre: usuario.nombre,
+        nombre: usuario.name,
         email: usuario.email,
-        rol: usuario.rol,
-        tipoPersona: usuario.tipoPersona,
+        rol: usuario.role.name,
       },
     };
   }
