@@ -6,8 +6,8 @@ export class DocentesService {
   constructor(private prisma: PrismaService) {}
 
   // Obtener todos los usuarios (docentes/estudiantes/invitados) con sus carreras, ciclos y materias
-  findAll() {
-    return this.prisma.usuario.findMany({
+  async findAll() {
+    const usuarios = await this.prisma.usuario.findMany({
       include: {
         carreras: {
           include: {
@@ -18,6 +18,7 @@ export class DocentesService {
         },
       },
     });
+    return usuarios.map(({ password, ...usuario }) => usuario);
   }
 
   // Buscar un usuario por el UID de su tarjeta RFID
@@ -58,7 +59,7 @@ export class DocentesService {
         nombre: data.nombre,
         iniciales: data.iniciales,
         rol: data.rol || 'usuario',
-        tipoPersona: data.tipoPersona || 'DOCENTE',
+        tipoPersona: data.tipoPersona || 'CLIENTE',
         carreras: data.carreras
           ? {
               create: data.carreras.map((c) => ({

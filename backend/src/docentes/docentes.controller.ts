@@ -33,6 +33,8 @@ type UpdateDocenteDto = Partial<
 export class DocentesController {
   constructor(private readonly service: DocentesService) {}
 
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin')
   @Get()
   findAll() {
     return this.service.findAll();

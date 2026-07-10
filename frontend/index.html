@@ -22,6 +22,7 @@
           <button class="nav-item" data-section="catalogo">Catalogo</button>
           <button class="nav-item requires-login" data-section="prestamos">Prestamos</button>
           <button class="nav-item requires-admin" data-section="usuarios">Usuarios</button>
+          <button class="nav-item requires-admin" data-section="roles">Roles</button>
           <button class="nav-item requires-staff" data-section="registros">Registros</button>
         </nav>
 
@@ -45,8 +46,14 @@
           <article class="access-card access-admin">
             <span>Administrador</span>
             <h2>Control completo</h2>
-            <p>Usuarios, reportes, catalogo, prestamos y auditoria.</p>
+            <p>Usuarios, reportes, prestamos y auditoria. Los libros nuevos los registra biblioteca.</p>
             <button type="button" data-login-role="admin">Entrar como admin</button>
+          </article>
+          <article class="access-card access-subadmin">
+            <span>Subadministrador</span>
+            <h2>Apoyo operativo</h2>
+            <p>Consulta catalogo, prestamos y registros sin crear libros.</p>
+            <button type="button" data-login-role="subadmin">Entrar como subadmin</button>
           </article>
           <article class="access-card access-librarian">
             <span>Bibliotecario</span>
@@ -61,10 +68,10 @@
             <button type="button" data-login-role="usuario">Entrar como cliente</button>
           </article>
           <article class="access-card access-teacher">
-            <span>Maestro</span>
+            <span>Profesor</span>
             <h2>Prestamo gratuito</h2>
             <p>Puede solicitar libros sin costo y revisar disponibilidad.</p>
-            <button type="button" data-login-role="maestro">Entrar como maestro</button>
+            <button type="button" data-login-role="maestro">Entrar como profesor</button>
           </article>
           <article class="access-card access-student">
             <span>Estudiante</span>
@@ -78,6 +85,20 @@
           <input id="email" type="email" placeholder="correo" autocomplete="username" />
           <input id="password" type="password" placeholder="clave" autocomplete="current-password" />
           <button type="submit">Iniciar sesion</button>
+        </form>
+
+        <form class="panel register-form" id="registerForm">
+          <h3>Registrarse</h3>
+          <input name="nombre" placeholder="Nombre completo" required />
+          <input name="email" type="email" placeholder="Correo" required />
+          <input name="password" type="password" placeholder="Contrasena" required />
+          <input name="confirmPassword" type="password" placeholder="Confirmar contrasena" required />
+          <select name="tipoPersona">
+            <option value="CLIENTE">Cliente</option>
+            <option value="ESTUDIANTE">Estudiante</option>
+            <option value="PROFESOR">Profesor</option>
+          </select>
+          <button type="submit">Crear cuenta</button>
         </form>
 
         <section class="status-strip" id="statusStrip">
@@ -130,11 +151,19 @@
             </div>
             <div class="toolbar">
               <select id="programFilter"><option value="">Todos los programas</option></select>
+              <select id="categoryFilter"><option value="">Todas las categorias</option></select>
+              <select id="availabilityFilter">
+                <option value="">Todos</option>
+                <option value="disponibles">Disponibles</option>
+                <option value="agotados">No disponibles</option>
+              </select>
               <input id="bookSearch" type="search" placeholder="Buscar nombre, año, autor o editorial" />
             </div>
           </div>
 
+          <p class="result-count" id="bookResultCount">0 libros encontrados</p>
           <div class="book-grid" id="bookGrid"></div>
+          <section class="panel detail-panel hidden" id="bookDetail"></section>
 
           <form class="panel compact-form user-only" id="requestLoanForm">
             <h3>Solicitar prestamo</h3>
@@ -149,7 +178,7 @@
             <button type="submit">Pedir libro</button>
           </form>
 
-          <form class="panel form-grid staff-only" id="bookForm">
+          <form class="panel form-grid librarian-only" id="bookForm">
             <h3>Agregar libro</h3>
             <input name="codigo" placeholder="Codigo" required />
             <input name="titulo" placeholder="Titulo" required />
@@ -176,11 +205,11 @@
           </div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Usuario</th><th>Libro</th><th>Fecha</th><th>Accion</th></tr></thead>
+              <thead><tr><th>Usuario</th><th>Libro</th><th>Fecha</th><th>Limite</th><th>Estado</th><th>Accion</th></tr></thead>
               <tbody id="loanRows"></tbody>
             </table>
           </div>
-          <form class="panel compact-form staff-only" id="loanForm">
+          <form class="panel compact-form loan-manager-only" id="loanForm">
             <h3>Nuevo prestamo</h3>
             <input name="docenteId" type="number" placeholder="ID de usuario" required />
             <input name="libroId" type="number" placeholder="ID de libro" required />
@@ -203,12 +232,23 @@
             <input name="rfid" placeholder="RFID" />
             <input name="iniciales" placeholder="Iniciales" />
             <select name="tipoPersona">
-              <option value="DOCENTE">Docente</option>
+              <option value="PROFESOR">Profesor</option>
               <option value="ESTUDIANTE">Estudiante</option>
-              <option value="INVITADO">Invitado</option>
+              <option value="CLIENTE">Cliente</option>
             </select>
             <button type="submit">Guardar usuario</button>
           </form>
+        </section>
+
+        <section class="view" id="roles">
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">Permisos</p>
+              <h2>Roles y permisos</h2>
+            </div>
+            <button id="loadRoles">Actualizar</button>
+          </div>
+          <div class="role-list" id="roleRows"></div>
         </section>
 
         <section class="view" id="registros">
@@ -230,6 +270,7 @@
       </main>
     </div>
 
+    <script src="./config.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>

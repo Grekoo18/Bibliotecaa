@@ -18,6 +18,20 @@ export class AuthController {
     return this.authService.login(body.email, body.password);
   }
 
+  @Post('register')
+  register(
+    @Body()
+    body: {
+      nombre: string;
+      email: string;
+      password: string;
+      confirmPassword?: string;
+      tipoPersona?: string;
+    },
+  ) {
+    return this.authService.register(body);
+  }
+
   // El frontend llama esto para verificar que el token sigue válido y obtener el rol
   @UseGuards(AuthGuard('jwt'))
   @Post('me')

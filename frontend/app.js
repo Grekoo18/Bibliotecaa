@@ -1,4 +1,7 @@
-const API_BASE = localStorage.getItem('biblioteca_api') || 'http://localhost:3001';
+const API_BASE =
+  localStorage.getItem('biblioteca_api') ||
+  window.BIBLIOTECA_API_URL ||
+  'http://localhost:3001';
 
 const ACCESS = {
   admin: {
@@ -9,7 +12,7 @@ const ACCESS = {
     rol: 'admin',
     permissions: [
       'Gestionar usuarios',
-      'Agregar y retirar libros',
+      'Ver y administrar tablas del sistema',
       'Ver registros',
       'Gestionar prestamos',
     ],
@@ -33,7 +36,7 @@ const ACCESS = {
     label: 'Cliente',
     nombre: 'Cliente',
     rol: 'usuario',
-    tipoPersona: 'INVITADO',
+    tipoPersona: 'CLIENTE',
     permissions: [
       'Ver libros',
       'Pedir libros',
@@ -44,11 +47,19 @@ const ACCESS = {
   maestro: {
     email: 'maestro@biblioteca.local',
     password: 'Maestro123!',
-    label: 'Maestro',
-    nombre: 'Maestro',
+    label: 'Profesor',
+    nombre: 'Profesor',
     rol: 'usuario',
-    tipoPersona: 'DOCENTE',
+    tipoPersona: 'PROFESOR',
     permissions: ['Ver libros', 'Pedir libros', 'Prestamos gratuitos'],
+  },
+  subadmin: {
+    email: 'subadmin@biblioteca.local',
+    password: 'Subadmin123!',
+    label: 'Subadministrador',
+    nombre: 'Subadministrador',
+    rol: 'subadmin',
+    permissions: ['Ver catalogo', 'Consultar prestamos', 'Ver registros'],
   },
   estudiante: {
     email: 'estudiante@biblioteca.local',
@@ -67,7 +78,15 @@ const state = {
   books: [],
   users: [],
   loans: [],
+  roles: [],
 };
+
+if (!state.user || typeof state.user !== 'object' || !state.user.rol) {
+  state.token = '';
+  state.user = null;
+  localStorage.removeItem('biblioteca_token');
+  localStorage.removeItem('biblioteca_user');
+}
 
 const demoBooks = [
   {
@@ -125,6 +144,116 @@ const demoBooks = [
     disponibles: 4,
     totalEjemplares: 4,
   },
+  {
+    id: 6,
+    codigo: 'SOFT-101',
+    titulo: 'Clean Code',
+    autor: 'Robert C. Martin',
+    programa: 'Desarrollo de Software',
+    categoria: 'Programacion',
+    descripcion: 'Buenas practicas para escribir codigo claro, mantenible y profesional.',
+    disponibles: 3,
+    totalEjemplares: 3,
+  },
+  {
+    id: 7,
+    codigo: 'SOFT-103',
+    titulo: 'Inteligencia Artificial: Un Enfoque Moderno',
+    autor: 'Stuart Russell y Peter Norvig',
+    programa: 'Desarrollo de Software',
+    categoria: 'Inteligencia Artificial',
+    descripcion: 'Fundamentos de IA, aprendizaje automatico y agentes inteligentes.',
+    disponibles: 2,
+    totalEjemplares: 2,
+  },
+  {
+    id: 8,
+    codigo: 'DIS-201',
+    titulo: 'No Me Hagas Pensar',
+    autor: 'Steve Krug',
+    programa: 'Diseno Grafico',
+    categoria: 'Diseno UX',
+    descripcion: 'Guia directa para crear interfaces simples, claras y faciles de usar.',
+    disponibles: 4,
+    totalEjemplares: 4,
+  },
+  {
+    id: 9,
+    codigo: 'EMP-302',
+    titulo: 'El Metodo Lean Startup',
+    autor: 'Eric Ries',
+    programa: 'Gestion Empresarial',
+    categoria: 'Emprendimiento',
+    descripcion: 'Modelo para validar ideas y construir productos viables.',
+    disponibles: 3,
+    totalEjemplares: 3,
+  },
+  {
+    id: 10,
+    codigo: 'EDU-401',
+    titulo: 'Ensenar a Pensar',
+    autor: 'Robert Swartz',
+    programa: 'Educacion Basica',
+    categoria: 'Educacion',
+    descripcion: 'Estrategias para desarrollar pensamiento critico dentro del aula.',
+    disponibles: 3,
+    totalEjemplares: 3,
+  },
+  {
+    id: 11,
+    codigo: 'CIE-501',
+    titulo: 'Breves Respuestas a las Grandes Preguntas',
+    autor: 'Stephen Hawking',
+    programa: 'Ciencias Basicas',
+    categoria: 'Ciencia',
+    descripcion: 'Reflexiones sobre universo, tecnologia, inteligencia artificial y futuro humano.',
+    disponibles: 3,
+    totalEjemplares: 3,
+  },
+  {
+    id: 12,
+    codigo: 'LIT-601',
+    titulo: 'Cien Anos de Soledad',
+    autor: 'Gabriel Garcia Marquez',
+    programa: 'Coleccion General',
+    categoria: 'Literatura',
+    descripcion: 'Novela esencial del realismo magico latinoamericano y la familia Buendia.',
+    disponibles: 4,
+    totalEjemplares: 4,
+  },
+  {
+    id: 13,
+    codigo: 'LIT-602',
+    titulo: 'El Principito',
+    autor: 'Antoine de Saint-Exupery',
+    programa: 'Coleccion General',
+    categoria: 'Literatura',
+    descripcion: 'Relato breve sobre amistad, imaginacion, responsabilidad y mirada humana.',
+    disponibles: 5,
+    totalEjemplares: 5,
+  },
+  {
+    id: 14,
+    codigo: 'SOC-701',
+    titulo: 'Sapiens: De Animales a Dioses',
+    autor: 'Yuval Noah Harari',
+    programa: 'Coleccion General',
+    categoria: 'Historia',
+    descripcion: 'Recorrido por la historia humana, la cultura, la economia y la tecnologia.',
+    disponibles: 3,
+    totalEjemplares: 3,
+  },
+  {
+    id: 15,
+    codigo: 'SOFT-104',
+    titulo: 'Designing Data-Intensive Applications',
+    autor: 'Martin Kleppmann',
+    programa: 'Desarrollo de Software',
+    categoria: 'Bases de Datos',
+    descripcion: 'Arquitectura de datos, escalabilidad y sistemas distribuidos.',
+    disponibles: 2,
+    totalEjemplares: 2,
+  },
 ];
 
 const $ = (selector) => document.querySelector(selector);
@@ -136,6 +265,33 @@ function getAccessByEmail(email) {
   );
 }
 
+function normalizeLoginUser(result, fallbackEmail) {
+  const usuario = result?.usuario || result?.user;
+  if (usuario?.rol) return usuario;
+
+  const access = getAccessByEmail(fallbackEmail);
+  if (!access) return null;
+
+  return {
+    id:
+      access.rol === 'admin'
+        ? 1
+        : access.rol === 'bibliotecario'
+          ? 2
+          : access.rol === 'subadmin'
+            ? 6
+            : access.tipoPersona === 'PROFESOR'
+              ? 4
+              : access.tipoPersona === 'ESTUDIANTE'
+                ? 5
+                : 3,
+    nombre: access.nombre,
+    email: access.email,
+    rol: access.rol,
+    tipoPersona: access.tipoPersona || 'CLIENTE',
+  };
+}
+
 function startLocalSession(access) {
   state.token = `demo-${access.rol}`;
   state.user = {
@@ -144,11 +300,13 @@ function startLocalSession(access) {
         ? 1
         : access.rol === 'bibliotecario'
           ? 2
-          : access.tipoPersona === 'DOCENTE'
-            ? 4
-            : access.tipoPersona === 'ESTUDIANTE'
-              ? 5
-              : 3,
+          : access.rol === 'subadmin'
+            ? 6
+            : access.tipoPersona === 'PROFESOR'
+              ? 4
+              : access.tipoPersona === 'ESTUDIANTE'
+                ? 5
+                : 3,
     nombre: access.nombre,
     email: access.email,
     rol: access.rol,
@@ -163,7 +321,24 @@ function isAdmin() {
 }
 
 function isStaff() {
+  return ['admin', 'subadmin', 'bibliotecario'].includes(state.user?.rol);
+}
+
+function isLibrarian() {
+  return state.user?.rol === 'bibliotecario';
+}
+
+function canManageBooks() {
   return ['admin', 'bibliotecario'].includes(state.user?.rol);
+}
+
+function canManageLoans() {
+  return ['admin', 'bibliotecario'].includes(state.user?.rol);
+}
+
+function canReturnLoan(loan) {
+  if (canManageLoans()) return true;
+  return isUserRole() && Number(loan.usuarioId) === Number(state.user?.id);
 }
 
 function isUserRole() {
@@ -218,17 +393,24 @@ function updateRoleUi() {
   $('#logoutButton').classList.toggle('hidden', !state.token);
   $('#loginBoard').classList.toggle('hidden', Boolean(state.token));
   $('#loginForm').classList.toggle('hidden', Boolean(state.token));
+  $('#registerForm').classList.toggle('hidden', Boolean(state.token));
 
   $$('.requires-admin').forEach((item) => item.classList.toggle('hidden', !isAdmin()));
   $$('.requires-staff').forEach((item) => item.classList.toggle('hidden', !isStaff()));
   $$('.requires-login').forEach((item) => item.classList.toggle('hidden', !state.token));
   $$('.admin-only').forEach((item) => item.classList.toggle('hidden', !isAdmin()));
   $$('.staff-only').forEach((item) => item.classList.toggle('hidden', !isStaff()));
+  $$('.librarian-only').forEach((item) => item.classList.toggle('hidden', !isLibrarian()));
+  $$('.loan-manager-only').forEach((item) =>
+    item.classList.toggle('hidden', !canManageLoans()),
+  );
   $$('.user-only').forEach((item) => item.classList.toggle('hidden', !isUserRole()));
 
   $('#roleHeadline').textContent =
     role === 'admin'
       ? 'Panel de administracion'
+      : role === 'subadmin'
+        ? 'Panel de apoyo'
       : role === 'bibliotecario'
         ? 'Mesa de trabajo del bibliotecario'
         : role === 'usuario'
@@ -238,6 +420,8 @@ function updateRoleUi() {
   $('#roleDescription').textContent =
     role === 'admin'
       ? 'Tienes acceso a usuarios, catalogo, prestamos y registros.'
+      : role === 'subadmin'
+        ? 'Puedes revisar catalogo, prestamos y registros operativos.'
       : role === 'bibliotecario'
         ? 'Puedes agregar libros, retirar libros y controlar prestamos.'
         : role === 'usuario'
@@ -283,8 +467,43 @@ function renderProgramOptions(programs) {
     programs.map((program) => `<option value="${program}">${program}</option>`).join('');
 }
 
+function renderCategoryOptions(books = state.books) {
+  const categories = [...new Set(books.map((book) => book.categoria).filter(Boolean))].sort();
+  $('#categoryFilter').innerHTML =
+    '<option value="">Todas las categorias</option>' +
+    categories.map((category) => `<option value="${category}">${category}</option>`).join('');
+}
+
+function applyBookFilters() {
+  const text = $('#bookSearch').value.trim().toLowerCase();
+  const program = $('#programFilter').value;
+  const category = $('#categoryFilter').value;
+  const availability = $('#availabilityFilter').value;
+
+  const filtered = state.books.filter((book) => {
+    const matchesText = text
+      ? `${book.titulo} ${book.autor} ${book.codigo} ${book.anio || ''} ${book.editorial || ''} ${book.isbn || ''}`
+          .toLowerCase()
+          .includes(text)
+      : true;
+    const matchesProgram = program ? book.programa === program : true;
+    const matchesCategory = category ? book.categoria === category : true;
+    const available = Number(book.disponibles || 0) > 0;
+    const matchesAvailability =
+      availability === 'disponibles'
+        ? available
+        : availability === 'agotados'
+          ? !available
+          : true;
+    return matchesText && matchesProgram && matchesCategory && matchesAvailability;
+  });
+
+  renderBooks(filtered);
+}
+
 function renderBooks(books = state.books) {
   const grid = $('#bookGrid');
+  $('#bookResultCount').textContent = `${books.length} libro${books.length === 1 ? '' : 's'} encontrado${books.length === 1 ? '' : 's'}`;
   if (!books.length) {
     grid.innerHTML = '<p>No se encontraron libros.</p>';
     return;
@@ -305,17 +524,18 @@ function renderBooks(books = state.books) {
           <div class="book-meta">
             <span>${book.programa || 'Sin programa'}</span>
             <span>${book.categoria || 'Sin categoria'}</span>
+            <span>${book.isbn || 'Sin ISBN'}</span>
           </div>
           <div class="stock">
             <span>ID ${book.id}</span>
             <strong>${book.disponibles}/${book.totalEjemplares} disponibles</strong>
           </div>
           ${
-            isStaff()
-              ? `<button class="danger" data-delete-book="${book.id}">Retirar libro</button>`
+            canManageBooks()
+              ? `<div class="card-actions"><button data-view-book="${book.id}">Ver detalle</button><button class="danger" data-delete-book="${book.id}">Retirar libro</button></div>`
               : isUserRole()
-                ? `<button data-request-book="${book.id}">Solicitar prestamo</button>`
-              : ''
+                ? `<div class="card-actions"><button data-view-book="${book.id}">Ver detalle</button><button data-request-book="${book.id}">Solicitar prestamo</button></div>`
+              : `<button data-view-book="${book.id}">Ver detalle</button>`
           }
         </article>
       `,
@@ -323,10 +543,39 @@ function renderBooks(books = state.books) {
     .join('');
 }
 
+function renderBookDetail(book) {
+  const panel = $('#bookDetail');
+  if (!book) {
+    panel.classList.add('hidden');
+    panel.innerHTML = '';
+    return;
+  }
+
+  panel.classList.remove('hidden');
+  panel.innerHTML = `
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">Detalle de libro</p>
+        <h2>${book.titulo}</h2>
+      </div>
+      <button type="button" class="secondary" id="closeBookDetail">Cerrar</button>
+    </div>
+    <div class="detail-grid">
+      <span><strong>Autor:</strong> ${book.autor || '-'}</span>
+      <span><strong>Anio:</strong> ${book.anio || '-'}</span>
+      <span><strong>Editorial:</strong> ${book.editorial || '-'}</span>
+      <span><strong>ISBN:</strong> ${book.isbn || '-'}</span>
+      <span><strong>Categoria:</strong> ${book.categoria || '-'}</span>
+      <span><strong>Disponibles:</strong> ${book.disponibles}/${book.totalEjemplares}</span>
+    </div>
+    <p>${book.descripcion || 'Sin descripcion.'}</p>
+  `;
+}
+
 function renderLoans() {
   const rows = $('#loanRows');
   if (!state.loans.length) {
-    rows.innerHTML = '<tr><td colspan="4">No hay prestamos activos.</td></tr>';
+    rows.innerHTML = '<tr><td colspan="6">No hay prestamos activos.</td></tr>';
     return;
   }
 
@@ -337,7 +586,13 @@ function renderLoans() {
         <td>${loan.usuario?.nombre || 'Usuario #' + loan.usuarioId}</td>
         <td>${loan.libro?.titulo || 'Libro #' + loan.libroId}</td>
         <td>${formatDate(loan.fechaPrestamo)}</td>
-        <td><button data-return-loan="${loan.id}">Devolver</button></td>
+        <td>${formatDate(loan.fechaLimite)}</td>
+        <td>${loan.estado || (loan.activo ? 'ACTIVO' : 'DEVUELTO')}</td>
+        <td>${
+          canReturnLoan(loan)
+            ? `<button data-return-loan="${loan.id}">Devolver</button>`
+            : '<span class="muted-text">Consulta</span>'
+        }</td>
       </tr>
     `,
     )
@@ -390,6 +645,25 @@ function renderRecords(records, stats) {
     : '<tr><td colspan="4">No hay registros para este mes.</td></tr>';
 }
 
+function renderRoles(roles = state.roles) {
+  const list = $('#roleRows');
+  if (!roles.length) {
+    list.innerHTML = '<p>No hay roles cargados.</p>';
+    return;
+  }
+  list.innerHTML = roles
+    .map(
+      (role) => `
+        <article class="role-card">
+          <strong>${role.nombre}</strong>
+          <span>${role.rol}</span>
+          <ul>${role.permisos.map((permiso) => `<li>${permiso}</li>`).join('')}</ul>
+        </article>
+      `,
+    )
+    .join('');
+}
+
 function applyDemoData() {
   state.books = demoBooks;
   state.users = [];
@@ -398,6 +672,7 @@ function applyDemoData() {
   renderUsers();
   renderLoans();
   renderProgramOptions([...new Set(demoBooks.map((book) => book.programa))]);
+  renderCategoryOptions(demoBooks);
   renderPrograms(
     Object.entries(
       demoBooks.reduce((acc, book) => {
@@ -410,7 +685,7 @@ function applyDemoData() {
 }
 
 function loanRuleForCurrentUser() {
-  if (state.user?.tipoPersona === 'DOCENTE') {
+  if (state.user?.tipoPersona === 'PROFESOR' || state.user?.tipoPersona === 'DOCENTE') {
     return {
       document: 'Credencial docente',
       detail: 'Prestamo gratuito para profesor.',
@@ -477,23 +752,46 @@ function returnDemoLoan(loanId) {
 
 async function loadPublicData() {
   try {
-    const [books, users, programs, programCounts] = await Promise.all([
+    const [books, programs, programCounts] = await Promise.all([
       api('/libros'),
-      api('/docentes'),
       api('/libros/programas'),
       api('/libros/conteo-por-programa'),
     ]);
     state.books = books;
-    state.users = users;
+    if (isAdmin()) {
+      try {
+        state.users = await api('/docentes');
+      } catch {
+        state.users = [];
+      }
+    } else {
+      state.users = [];
+    }
     renderBooks();
     renderUsers();
     renderProgramOptions(programs.filter(Boolean));
+    renderCategoryOptions(books);
     renderPrograms(programCounts);
     renderMetrics();
   } catch {
     applyDemoData();
     setStatus('Backend no disponible. Mostrando datos de presentacion.', true);
   }
+}
+
+async function loadRoles() {
+  try {
+    state.roles = await api('/roles');
+  } catch {
+    state.roles = [
+      { rol: 'admin', nombre: 'Administrador', permisos: ACCESS.admin.permissions },
+      { rol: 'subadmin', nombre: 'Subadministrador', permisos: ACCESS.subadmin.permissions },
+      { rol: 'bibliotecario', nombre: 'Bibliotecario', permisos: ACCESS.bibliotecario.permissions },
+      { rol: 'usuario', nombre: 'Usuario', permisos: ACCESS.usuario.permissions },
+      { rol: 'invitado', nombre: 'Invitado', permisos: ['Explorar catalogo', 'Ver disponibilidad'] },
+    ];
+  }
+  renderRoles();
 }
 
 async function loadLoans() {
@@ -520,7 +818,7 @@ async function loadLoans() {
 
 async function loadRecords() {
   if (!isStaff()) {
-    setStatus('Solo administrador o bibliotecario pueden ver registros.', true);
+    setStatus('Solo personal autorizado puede ver registros.', true);
     return;
   }
   const now = new Date();
@@ -542,6 +840,7 @@ async function init() {
   updateRoleUi();
   await loadPublicData();
   await loadLoans();
+  await loadRoles();
 }
 
 $$('.nav-item').forEach((button) => {
@@ -588,7 +887,10 @@ $('#loginForm').addEventListener('submit', async (event) => {
       }),
     });
     state.token = result.access_token;
-    state.user = result.usuario;
+    state.user = normalizeLoginUser(result, email);
+    if (!state.token || !state.user) {
+      throw new Error('La respuesta de inicio de sesion no trajo datos de usuario validos.');
+    }
     const localAccess = getAccessByEmail(state.user.email || email);
     if (localAccess && !state.user.tipoPersona) {
       state.user.tipoPersona = localAccess.tipoPersona;
@@ -625,33 +927,25 @@ $('#logoutButton').addEventListener('click', async () => {
   setStatus('Sesion cerrada.');
 });
 
-$('#bookSearch').addEventListener('input', async (event) => {
-  const text = event.target.value.trim();
-  const program = $('#programFilter').value;
-  const params = new URLSearchParams();
-  if (text) params.set('texto', text);
-  if (program) params.set('programa', program);
-  try {
-    const books = params.toString() ? await api(`/libros/buscar?${params}`) : state.books;
-    renderBooks(books);
-  } catch {
-    renderBooks(
-      state.books.filter((book) =>
-        `${book.titulo} ${book.autor} ${book.codigo} ${book.anio || ''} ${book.editorial || ''}`
-          .toLowerCase()
-          .includes(text.toLowerCase()),
-      ),
-    );
-  }
-});
+$('#bookSearch').addEventListener('input', applyBookFilters);
 
 $('#programFilter').addEventListener('change', () => {
-  $('#bookSearch').dispatchEvent(new Event('input'));
+  applyBookFilters();
 });
+
+$('#categoryFilter').addEventListener('change', applyBookFilters);
+$('#availabilityFilter').addEventListener('change', applyBookFilters);
 
 $('#bookGrid').addEventListener('click', async (event) => {
   const button = event.target.closest('[data-delete-book]');
   const requestButton = event.target.closest('[data-request-book]');
+  const viewButton = event.target.closest('[data-view-book]');
+  if (viewButton) {
+    const book = state.books.find((item) => Number(item.id) === Number(viewButton.dataset.viewBook));
+    renderBookDetail(book);
+    $('#bookDetail').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    return;
+  }
   if (requestButton) {
     if (!isUserRole()) return;
     const rule = loanRuleForCurrentUser();
@@ -679,13 +973,45 @@ $('#bookGrid').addEventListener('click', async (event) => {
     return;
   }
   if (!button) return;
-  if (!isStaff()) return;
+  if (!canManageBooks()) return;
   try {
     await api(`/libros/${button.dataset.deleteBook}`, { method: 'DELETE' });
     await loadPublicData();
     setStatus('Libro retirado del catalogo.');
   } catch (error) {
     setStatus(`No se pudo retirar el libro: ${error.message}`, true);
+  }
+});
+
+$('#bookDetail').addEventListener('click', (event) => {
+  if (event.target.closest('#closeBookDetail')) {
+    renderBookDetail(null);
+  }
+});
+
+$('#registerForm').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const formElement = event.currentTarget;
+  const payload = Object.fromEntries(new FormData(formElement).entries());
+  if (payload.password !== payload.confirmPassword) {
+    setStatus('Las contrasenas no coinciden.', true);
+    return;
+  }
+  try {
+    const result = await api('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    state.token = result.access_token;
+    state.user = normalizeLoginUser(result, payload.email);
+    localStorage.setItem('biblioteca_token', state.token);
+    localStorage.setItem('biblioteca_user', JSON.stringify(state.user));
+    formElement.reset();
+    updateRoleUi();
+    await Promise.all([loadPublicData(), loadLoans()]);
+    setStatus('Cuenta creada. Sesion iniciada.');
+  } catch (error) {
+    setStatus(`No se pudo registrar: ${error.message}`, true);
   }
 });
 
@@ -720,7 +1046,7 @@ $('#requestLoanForm').addEventListener('submit', async (event) => {
 
 $('#bookForm').addEventListener('submit', async (event) => {
   event.preventDefault();
-  if (!isStaff()) return;
+  if (!isLibrarian()) return;
   const formElement = event.currentTarget;
   const form = new FormData(formElement);
   const payload = Object.fromEntries(form.entries());
@@ -759,7 +1085,7 @@ $('#userForm').addEventListener('submit', async (event) => {
 
 $('#loanForm').addEventListener('submit', async (event) => {
   event.preventDefault();
-  if (!isStaff()) return;
+  if (!canManageLoans()) return;
   const formElement = event.currentTarget;
   const form = new FormData(formElement);
   try {
@@ -796,6 +1122,7 @@ $('#loanRows').addEventListener('click', async (event) => {
 
 $('#refreshLoans').addEventListener('click', loadLoans);
 $('#loadRecords').addEventListener('click', loadRecords);
+$('#loadRoles').addEventListener('click', loadRoles);
 $('[data-refresh="programas"]').addEventListener('click', loadPublicData);
 
 init();

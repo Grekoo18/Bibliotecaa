@@ -9,21 +9,21 @@ export class RegistrosController {
   constructor(private readonly service: RegistrosService) {}
 
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin', 'bibliotecario')
+  @Roles('admin', 'subadmin', 'bibliotecario')
   @Get()
   findAll() {
     return this.service.findAll();
   }
 
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin', 'bibliotecario')
+  @Roles('admin', 'subadmin', 'bibliotecario')
   @Get('mes/:anio/:mes')
   findByMes(@Param('anio') anio: string, @Param('mes') mes: string) {
     return this.service.findByMes(Number(anio), Number(mes));
   }
 
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin', 'bibliotecario')
+  @Roles('admin', 'subadmin', 'bibliotecario')
   @Get('stats/:anio/:mes')
   stats(@Param('anio') anio: string, @Param('mes') mes: string) {
     return this.service.stats(Number(anio), Number(mes));

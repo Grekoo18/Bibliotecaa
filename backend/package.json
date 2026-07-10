@@ -13,6 +13,7 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/src/main",
+    "start:railway": "prisma migrate deploy && node seed-users.js && node seed-books.js && node dist/src/main",
     "setup:db": "prisma migrate deploy && node seed-users.js && node seed-books.js",
     "seed:admin": "node seed-users.js",
     "seed:users": "node seed-users.js",

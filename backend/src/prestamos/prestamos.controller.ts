@@ -28,14 +28,14 @@ export class PrestamosController {
   constructor(private readonly service: PrestamosService) {}
 
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin', 'bibliotecario')
+  @Roles('admin', 'subadmin', 'bibliotecario')
   @Get('activos')
   findActivos() {
     return this.service.findActivos();
   }
 
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin', 'bibliotecario')
+  @Roles('admin', 'subadmin', 'bibliotecario')
   @Get('docente/:id')
   findByDocente(@Param('id') id: string) {
     return this.service.findByDocente(Number(id));

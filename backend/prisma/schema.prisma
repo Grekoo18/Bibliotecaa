@@ -12,8 +12,8 @@ model Usuario {
   email            String?          @unique
   password         String?
   rfid             String?          @unique
-  rol              String           @default("usuario") // "usuario" | "bibliotecario" | "admin"
-  tipoPersona      String           @default("DOCENTE")  // "DOCENTE" | "ESTUDIANTE" | "INVITADO"
+  rol              String           @default("usuario") // "usuario" | "bibliotecario" | "admin" | "subadmin"
+  tipoPersona      String           @default("CLIENTE")  // "PROFESOR" | "ESTUDIANTE" | "CLIENTE"
   iniciales        String?
   prestamosActivos Int              @default(0)
   carreras         UsuarioCarrera[]
@@ -85,11 +85,17 @@ model Prestamo {
   libro           Libro     @relation(fields: [libroId], references: [id])
   libroId         Int
   fechaPrestamo   DateTime  @default(now())
+  fechaLimite     DateTime?
   fechaDevolucion DateTime?
+  estado          String    @default("ACTIVO")
   activo          Boolean   @default(true)
   nombreInvitado  String?
   tipoDocumento   String?
   numeroDocumento String?
+  costoBase       Decimal   @default(0) @db.Decimal(10, 2)
+  descuento       Decimal   @default(0) @db.Decimal(10, 2)
+  multa           Decimal   @default(0) @db.Decimal(10, 2)
+  costoFinal      Decimal   @default(0) @db.Decimal(10, 2)
 }
 
 model Registro {

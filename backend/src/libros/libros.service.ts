@@ -17,6 +17,12 @@ export class LibrosService {
     });
   }
 
+  findById(id: number) {
+    return this.prisma.libro.findUnique({
+      where: { id },
+    });
+  }
+
   create(data: {
     codigo: string;
     titulo: string;

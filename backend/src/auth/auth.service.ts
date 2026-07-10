@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   ServiceUnavailableException,
   UnauthorizedException,
@@ -32,6 +33,53 @@ export class AuthService {
     if (!valida) {
       throw new UnauthorizedException('Credenciales inválidas');
     }
+
+    const payload = {
+      sub: usuario.id,
+      rol: usuario.rol,
+      email: usuario.email,
+      tipoPersona: usuario.tipoPersona,
+    };
+
+    return {
+      access_token: this.jwtService.sign(payload),
+      usuario: {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        email: usuario.email,
+        rol: usuario.rol,
+        tipoPersona: usuario.tipoPersona,
+      },
+    };
+  }
+
+  async register(data: {
+    nombre: string;
+    email: string;
+    password: string;
+    confirmPassword?: string;
+    tipoPersona?: string;
+  }) {
+    if (data.confirmPassword && data.password !== data.confirmPassword) {
+      throw new BadRequestException('Las contrasenas no coinciden');
+    }
+
+    const email = data.email.trim().toLowerCase();
+    const exists = await this.prisma.usuario.findUnique({ where: { email } });
+    if (exists) {
+      throw new BadRequestException('Ya existe un usuario con ese correo');
+    }
+
+    const passwordHash = await bcrypt.hash(data.password, 10);
+    const usuario = await this.prisma.usuario.create({
+      data: {
+        nombre: data.nombre.trim(),
+        email,
+        password: passwordHash,
+        rol: 'usuario',
+        tipoPersona: data.tipoPersona || 'CLIENTE',
+      },
+    });
 
     const payload = {
       sub: usuario.id,

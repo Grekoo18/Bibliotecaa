@@ -4,6 +4,8 @@
   "private": true,
   "description": "Frontend separado de Nuestra Biblioteca.",
   "scripts": {
-    "start": "node server.js"
+    "dev": "node server.js",
+    "start": "node server.js",
+    "build": "node build.js && node --check app.js"
   }
 }

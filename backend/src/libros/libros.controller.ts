@@ -43,8 +43,13 @@ export class LibrosController {
     return this.service.findByCodigo(codigo);
   }
 
+  @Get(':id')
+  findById(@Param('id') id: string) {
+    return this.service.findById(Number(id));
+  }
+
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin', 'bibliotecario')
+  @Roles('bibliotecario')
   @Post()
   create(
     @Body()

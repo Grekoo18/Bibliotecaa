@@ -18,6 +18,15 @@ const users = [
     email: process.env.BIBLIOTECARIO_EMAIL || 'bibliotecario@biblioteca.local',
     password: process.env.BIBLIOTECARIO_PASSWORD || 'Biblio123!',
     rol: 'bibliotecario',
+    tipoPersona: 'CLIENTE',
+  },
+  {
+    nombre: 'Subadministrador',
+    iniciales: 'SUB',
+    email: process.env.SUBADMIN_EMAIL || 'subadmin@biblioteca.local',
+    password: process.env.SUBADMIN_PASSWORD || 'Subadmin123!',
+    rol: 'subadmin',
+    tipoPersona: 'CLIENTE',
   },
   {
     nombre: 'Cliente',
@@ -25,15 +34,15 @@ const users = [
     email: process.env.USUARIO_EMAIL || 'usuario@biblioteca.local',
     password: process.env.USUARIO_PASSWORD || 'Usuario123!',
     rol: 'usuario',
-    tipoPersona: 'INVITADO',
+    tipoPersona: 'CLIENTE',
   },
   {
-    nombre: 'Maestro',
-    iniciales: 'MTR',
-    email: process.env.MAESTRO_EMAIL || 'maestro@biblioteca.local',
-    password: process.env.MAESTRO_PASSWORD || 'Maestro123!',
+    nombre: 'Profesor',
+    iniciales: 'PRO',
+    email: process.env.PROFESOR_EMAIL || 'maestro@biblioteca.local',
+    password: process.env.PROFESOR_PASSWORD || 'Maestro123!',
     rol: 'usuario',
-    tipoPersona: 'DOCENTE',
+    tipoPersona: 'PROFESOR',
   },
   {
     nombre: 'Estudiante',
@@ -64,7 +73,7 @@ async function main() {
         iniciales: user.iniciales,
         password: hashedPassword,
         rol: user.rol,
-        tipoPersona: user.tipoPersona || 'DOCENTE',
+        tipoPersona: user.tipoPersona || 'CLIENTE',
       },
       create: {
         nombre: user.nombre,
@@ -72,7 +81,7 @@ async function main() {
         email: user.email,
         password: hashedPassword,
         rol: user.rol,
-        tipoPersona: user.tipoPersona || 'DOCENTE',
+        tipoPersona: user.tipoPersona || 'CLIENTE',
       },
     });
   }
