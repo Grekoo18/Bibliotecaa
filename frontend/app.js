@@ -3,13 +3,9 @@ const API_BASE =
   window.BIBLIOTECA_API_URL ||
   'http://localhost:3001';
 
-const ACCESS = {
+const ROLE_INFO = {
   admin: {
-    email: 'admin@biblioteca.local',
-    password: 'Admin123!',
     label: 'Administrador',
-    nombre: 'Administrador',
-    rol: 'admin',
     permissions: [
       'Gestionar usuarios',
       'Ver y administrar tablas del sistema',
@@ -18,11 +14,7 @@ const ACCESS = {
     ],
   },
   bibliotecario: {
-    email: 'bibliotecario@biblioteca.local',
-    password: 'Biblio123!',
     label: 'Bibliotecario',
-    nombre: 'Bibliotecario',
-    rol: 'bibliotecario',
     permissions: [
       'Agregar y retirar libros',
       'Registrar prestamos',
@@ -31,12 +23,7 @@ const ACCESS = {
     ],
   },
   usuario: {
-    email: 'usuario@biblioteca.local',
-    password: 'Usuario123!',
-    label: 'Cliente',
-    nombre: 'Cliente',
-    rol: 'usuario',
-    tipoPersona: 'CLIENTE',
+    label: 'Usuario',
     permissions: [
       'Ver libros',
       'Pedir libros',
@@ -44,30 +31,27 @@ const ACCESS = {
       'Prestamo maximo de 10 dias',
     ],
   },
-  maestro: {
-    email: 'maestro@biblioteca.local',
-    password: 'Maestro123!',
-    label: 'Profesor',
-    nombre: 'Profesor',
-    rol: 'usuario',
-    tipoPersona: 'PROFESOR',
-    permissions: ['Ver libros', 'Pedir libros', 'Prestamos gratuitos'],
-  },
   subadmin: {
-    email: 'subadmin@biblioteca.local',
-    password: 'Subadmin123!',
     label: 'Subadministrador',
-    nombre: 'Subadministrador',
-    rol: 'subadmin',
     permissions: ['Ver catalogo', 'Consultar prestamos', 'Ver registros'],
   },
-  estudiante: {
-    email: 'estudiante@biblioteca.local',
-    password: 'Estudiante123!',
+  invitado: {
+    label: 'Invitado',
+    permissions: ['Explorar catalogo', 'Ver disponibilidad'],
+  },
+};
+
+const PERSON_TYPE_INFO = {
+  CLIENTE: {
+    label: 'Cliente',
+    permissions: ['Ver libros', 'Pedir libros', 'Devolver libros', 'Prestamo maximo de 10 dias'],
+  },
+  PROFESOR: {
+    label: 'Profesor',
+    permissions: ['Ver libros', 'Pedir libros', 'Prestamos gratuitos'],
+  },
+  ESTUDIANTE: {
     label: 'Estudiante',
-    nombre: 'Estudiante',
-    rol: 'usuario',
-    tipoPersona: 'ESTUDIANTE',
     permissions: ['Ver libros', 'Pedir libros', '50% de descuento en prestamo'],
   },
 };
@@ -259,61 +243,10 @@ const demoBooks = [
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
 
-function getAccessByEmail(email) {
-  return Object.values(ACCESS).find(
-    (access) => access.email.toLowerCase() === email.toLowerCase(),
-  );
-}
-
-function normalizeLoginUser(result, fallbackEmail) {
+function normalizeLoginUser(result) {
   const usuario = result?.usuario || result?.user;
   if (usuario?.rol) return usuario;
-
-  const access = getAccessByEmail(fallbackEmail);
-  if (!access) return null;
-
-  return {
-    id:
-      access.rol === 'admin'
-        ? 1
-        : access.rol === 'bibliotecario'
-          ? 2
-          : access.rol === 'subadmin'
-            ? 6
-            : access.tipoPersona === 'PROFESOR'
-              ? 4
-              : access.tipoPersona === 'ESTUDIANTE'
-                ? 5
-                : 3,
-    nombre: access.nombre,
-    email: access.email,
-    rol: access.rol,
-    tipoPersona: access.tipoPersona || 'CLIENTE',
-  };
-}
-
-function startLocalSession(access) {
-  state.token = `demo-${access.rol}`;
-  state.user = {
-    id:
-      access.rol === 'admin'
-        ? 1
-        : access.rol === 'bibliotecario'
-          ? 2
-          : access.rol === 'subadmin'
-            ? 6
-            : access.tipoPersona === 'PROFESOR'
-              ? 4
-              : access.tipoPersona === 'ESTUDIANTE'
-                ? 5
-                : 3,
-    nombre: access.nombre,
-    email: access.email,
-    rol: access.rol,
-    tipoPersona: access.tipoPersona,
-  };
-  localStorage.setItem('biblioteca_token', state.token);
-  localStorage.setItem('biblioteca_user', JSON.stringify(state.user));
+  return null;
 }
 
 function isAdmin() {
@@ -381,17 +314,16 @@ function formatDate(value) {
 
 function updateRoleUi() {
   const role = state.user?.rol || 'invitado';
-  const access = (state.user?.email && getAccessByEmail(state.user.email)) || ACCESS[role] || {
-    label: 'Invitado',
-    permissions: ['Seleccionar un perfil', 'Consultar demo del catalogo'],
-  };
+  const access =
+    role === 'usuario' && state.user?.tipoPersona
+      ? PERSON_TYPE_INFO[state.user.tipoPersona] || ROLE_INFO.usuario
+      : ROLE_INFO[role] || ROLE_INFO.invitado;
 
   $('#sessionName').textContent = state.user?.nombre || access.label;
   $('#sessionRole').textContent = role === 'invitado' ? 'Sin iniciar sesion' : role;
   $('#permissionTitle').textContent = access.label;
   $('#permissionList').innerHTML = access.permissions.map((item) => `<li>${item}</li>`).join('');
   $('#logoutButton').classList.toggle('hidden', !state.token);
-  $('#loginBoard').classList.toggle('hidden', Boolean(state.token));
   $('#loginForm').classList.toggle('hidden', Boolean(state.token));
   $('#registerForm').classList.toggle('hidden', Boolean(state.token));
 
@@ -426,7 +358,7 @@ function updateRoleUi() {
         ? 'Puedes agregar libros, retirar libros y controlar prestamos.'
         : role === 'usuario'
           ? 'Puedes ver libros, revisar disponibilidad y solicitar prestamos.'
-          : 'Elige un perfil de acceso. La interfaz cambia segun los permisos de cada rol.';
+          : 'Inicia sesion. La interfaz cambia segun el rol real de tu cuenta.';
 }
 
 function renderMetrics() {
@@ -784,11 +716,11 @@ async function loadRoles() {
     state.roles = await api('/roles');
   } catch {
     state.roles = [
-      { rol: 'admin', nombre: 'Administrador', permisos: ACCESS.admin.permissions },
-      { rol: 'subadmin', nombre: 'Subadministrador', permisos: ACCESS.subadmin.permissions },
-      { rol: 'bibliotecario', nombre: 'Bibliotecario', permisos: ACCESS.bibliotecario.permissions },
-      { rol: 'usuario', nombre: 'Usuario', permisos: ACCESS.usuario.permissions },
-      { rol: 'invitado', nombre: 'Invitado', permisos: ['Explorar catalogo', 'Ver disponibilidad'] },
+      { rol: 'admin', nombre: 'Administrador', permisos: ROLE_INFO.admin.permissions },
+      { rol: 'subadmin', nombre: 'Subadministrador', permisos: ROLE_INFO.subadmin.permissions },
+      { rol: 'bibliotecario', nombre: 'Bibliotecario', permisos: ROLE_INFO.bibliotecario.permissions },
+      { rol: 'usuario', nombre: 'Usuario', permisos: ROLE_INFO.usuario.permissions },
+      { rol: 'invitado', nombre: 'Invitado', permisos: ROLE_INFO.invitado.permissions },
     ];
   }
   renderRoles();
@@ -864,20 +796,10 @@ $$('.nav-item').forEach((button) => {
   });
 });
 
-$$('[data-login-role]').forEach((button) => {
-  button.addEventListener('click', () => {
-    const access = ACCESS[button.dataset.loginRole];
-    $('#email').value = access.email;
-    $('#password').value = access.password;
-    setStatus(`Credenciales de ${access.label} listas. Presiona Iniciar sesion.`);
-  });
-});
-
 $('#loginForm').addEventListener('submit', async (event) => {
   event.preventDefault();
   const email = $('#email').value.trim();
   const password = $('#password').value;
-  const access = getAccessByEmail(email);
   try {
     const result = await api('/auth/login', {
       method: 'POST',
@@ -887,13 +809,9 @@ $('#loginForm').addEventListener('submit', async (event) => {
       }),
     });
     state.token = result.access_token;
-    state.user = normalizeLoginUser(result, email);
+    state.user = normalizeLoginUser(result);
     if (!state.token || !state.user) {
       throw new Error('La respuesta de inicio de sesion no trajo datos de usuario validos.');
-    }
-    const localAccess = getAccessByEmail(state.user.email || email);
-    if (localAccess && !state.user.tipoPersona) {
-      state.user.tipoPersona = localAccess.tipoPersona;
     }
     localStorage.setItem('biblioteca_token', state.token);
     localStorage.setItem('biblioteca_user', JSON.stringify(state.user));
@@ -902,15 +820,6 @@ $('#loginForm').addEventListener('submit', async (event) => {
     await loadLoans();
     setStatus(`Sesion iniciada como ${state.user.rol}.`);
   } catch (error) {
-    if (error.message === 'Failed to fetch' && access && password === access.password) {
-      startLocalSession(access);
-      updateRoleUi();
-      applyDemoData();
-      setStatus(
-        `Modo presentacion: entraste como ${access.label}. Enciende el backend para usar la base real.`,
-      );
-      return;
-    }
     setStatus(`No se pudo iniciar sesion: ${error.message}`, true);
   }
 });
@@ -1003,7 +912,10 @@ $('#registerForm').addEventListener('submit', async (event) => {
       body: JSON.stringify(payload),
     });
     state.token = result.access_token;
-    state.user = normalizeLoginUser(result, payload.email);
+    state.user = normalizeLoginUser(result);
+    if (!state.token || !state.user) {
+      throw new Error('La respuesta de registro no trajo datos de usuario validos.');
+    }
     localStorage.setItem('biblioteca_token', state.token);
     localStorage.setItem('biblioteca_user', JSON.stringify(state.user));
     formElement.reset();

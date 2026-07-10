@@ -42,46 +42,8 @@
           <button type="button" id="logoutButton" class="secondary hidden">Cerrar sesion</button>
         </header>
 
-        <section class="login-board" id="loginBoard">
-          <article class="access-card access-admin">
-            <span>Administrador</span>
-            <h2>Control completo</h2>
-            <p>Usuarios, reportes, prestamos y auditoria. Los libros nuevos los registra biblioteca.</p>
-            <button type="button" data-login-role="admin">Entrar como admin</button>
-          </article>
-          <article class="access-card access-subadmin">
-            <span>Subadministrador</span>
-            <h2>Apoyo operativo</h2>
-            <p>Consulta catalogo, prestamos y registros sin crear libros.</p>
-            <button type="button" data-login-role="subadmin">Entrar como subadmin</button>
-          </article>
-          <article class="access-card access-librarian">
-            <span>Bibliotecario</span>
-            <h2>Operacion diaria</h2>
-            <p>Agregar libros, retirar libros, registrar prestamos y devoluciones.</p>
-            <button type="button" data-login-role="bibliotecario">Entrar como bibliotecario</button>
-          </article>
-          <article class="access-card access-user">
-            <span>Cliente</span>
-            <h2>Prestamo 10 dias</h2>
-            <p>Consulta libros, pide prestamos y devuelve material con control de multa.</p>
-            <button type="button" data-login-role="usuario">Entrar como cliente</button>
-          </article>
-          <article class="access-card access-teacher">
-            <span>Profesor</span>
-            <h2>Prestamo gratuito</h2>
-            <p>Puede solicitar libros sin costo y revisar disponibilidad.</p>
-            <button type="button" data-login-role="maestro">Entrar como profesor</button>
-          </article>
-          <article class="access-card access-student">
-            <span>Estudiante</span>
-            <h2>50% descuento</h2>
-            <p>Puede solicitar libros con descuento y consultar el catalogo.</p>
-            <button type="button" data-login-role="estudiante">Entrar como estudiante</button>
-          </article>
-        </section>
-
         <form class="login-form" id="loginForm">
+          <h3>Iniciar sesion</h3>
           <input id="email" type="email" placeholder="correo" autocomplete="username" />
           <input id="password" type="password" placeholder="clave" autocomplete="current-password" />
           <button type="submit">Iniciar sesion</button>
@@ -102,7 +64,7 @@
         </form>
 
         <section class="status-strip" id="statusStrip">
-          <span id="statusMessage">Selecciona un perfil para iniciar.</span>
+          <span id="statusMessage">Inicia sesion con tu correo y contrasena.</span>
         </section>
 
         <section class="view active" id="dashboard">
@@ -112,7 +74,7 @@
               <h2 id="roleHeadline">Gestiona la biblioteca sin complicarte</h2>
             </div>
             <p id="roleDescription">
-              Elige un perfil de acceso. La interfaz cambia segun los permisos de cada rol.
+              Inicia sesion. La interfaz cambia segun el rol real de tu cuenta.
             </p>
           </div>
 

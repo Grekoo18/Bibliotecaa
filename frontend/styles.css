@@ -256,6 +256,10 @@ h2 {
   margin: 0 0 14px auto;
 }
 
+.login-form h3 {
+  grid-column: 1 / -1;
+}
+
 .register-form {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
