@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Biblioteca</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">B</div>
+          <div>
+            <strong>Biblioteca</strong>
+            <span>Gestion academica</span>
+          </div>
+        </div>
+
+        <nav class="nav" aria-label="Menu principal">
+          <button class="nav-item active" data-section="dashboard">Inicio</button>
+          <button class="nav-item" data-section="catalogo">Catalogo</button>
+          <button class="nav-item requires-login" data-section="prestamos">Prestamos</button>
+          <button class="nav-item requires-admin" data-section="usuarios">Usuarios</button>
+          <button class="nav-item requires-staff" data-section="registros">Registros</button>
+        </nav>
+
+        <section class="session-card">
+          <span>Sesion actual</span>
+          <strong id="sessionName">Invitado</strong>
+          <small id="sessionRole">Sin iniciar sesion</small>
+        </section>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Panel institucional</p>
+            <h1>Biblioteca Central</h1>
+          </div>
+          <button type="button" id="logoutButton" class="secondary hidden">Cerrar sesion</button>
+        </header>
+
+        <section class="login-board" id="loginBoard">
+          <article class="access-card access-admin">
+            <span>Administrador</span>
+            <h2>Control completo</h2>
+            <p>Usuarios, reportes, catalogo, prestamos y auditoria.</p>
+            <button type="button" data-login-role="admin">Entrar como admin</button>
+          </article>
+          <article class="access-card access-librarian">
+            <span>Bibliotecario</span>
+            <h2>Operacion diaria</h2>
+            <p>Agregar libros, retirar libros, registrar prestamos y devoluciones.</p>
+            <button type="button" data-login-role="bibliotecario">Entrar como bibliotecario</button>
+          </article>
+          <article class="access-card access-user">
+            <span>Cliente</span>
+            <h2>Prestamo 10 dias</h2>
+            <p>Consulta libros, pide prestamos y devuelve material con control de multa.</p>
+            <button type="button" data-login-role="usuario">Entrar como cliente</button>
+          </article>
+          <article class="access-card access-teacher">
+            <span>Maestro</span>
+            <h2>Prestamo gratuito</h2>
+            <p>Puede solicitar libros sin costo y revisar disponibilidad.</p>
+            <button type="button" data-login-role="maestro">Entrar como maestro</button>
+          </article>
+          <article class="access-card access-student">
+            <span>Estudiante</span>
+            <h2>50% descuento</h2>
+            <p>Puede solicitar libros con descuento y consultar el catalogo.</p>
+            <button type="button" data-login-role="estudiante">Entrar como estudiante</button>
+          </article>
+        </section>
+
+        <form class="login-form" id="loginForm">
+          <input id="email" type="email" placeholder="correo" autocomplete="username" />
+          <input id="password" type="password" placeholder="clave" autocomplete="current-password" />
+          <button type="submit">Iniciar sesion</button>
+        </form>
+
+        <section class="status-strip" id="statusStrip">
+          <span id="statusMessage">Selecciona un perfil para iniciar.</span>
+        </section>
+
+        <section class="view active" id="dashboard">
+          <div class="hero-panel">
+            <div>
+              <p class="eyebrow">Resumen</p>
+              <h2 id="roleHeadline">Gestiona la biblioteca sin complicarte</h2>
+            </div>
+            <p id="roleDescription">
+              Elige un perfil de acceso. La interfaz cambia segun los permisos de cada rol.
+            </p>
+          </div>
+
+          <div class="metric-grid">
+            <article class="metric"><span>Libros</span><strong id="totalBooks">0</strong></article>
+            <article class="metric"><span>Disponibles</span><strong id="availableBooks">0</strong></article>
+            <article class="metric"><span>Prestamos activos</span><strong id="activeLoans">0</strong></article>
+            <article class="metric"><span>Usuarios</span><strong id="totalUsers">0</strong></article>
+          </div>
+
+          <div class="dashboard-grid">
+            <section class="panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow">Coleccion</p>
+                  <h2>Programas con mas material</h2>
+                </div>
+                <button class="secondary" data-refresh="programas">Actualizar</button>
+              </div>
+              <div class="program-list" id="programList"></div>
+            </section>
+
+            <section class="panel role-panel">
+              <p class="eyebrow">Permisos</p>
+              <h2 id="permissionTitle">Invitado</h2>
+              <ul id="permissionList"></ul>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="catalogo">
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">Inventario</p>
+              <h2>Catalogo</h2>
+            </div>
+            <div class="toolbar">
+              <select id="programFilter"><option value="">Todos los programas</option></select>
+              <input id="bookSearch" type="search" placeholder="Buscar nombre, año, autor o editorial" />
+            </div>
+          </div>
+
+          <div class="book-grid" id="bookGrid"></div>
+
+          <form class="panel compact-form user-only" id="requestLoanForm">
+            <h3>Solicitar prestamo</h3>
+            <input name="libroId" type="number" placeholder="ID de libro" required />
+            <select name="tipoDocumento" required>
+              <option value="">Documento entregado</option>
+              <option value="Cedula">Cedula</option>
+              <option value="Carnet estudiantil">Carnet estudiantil</option>
+              <option value="Credencial docente">Credencial docente</option>
+            </select>
+            <input name="numeroDocumento" placeholder="Numero de documento" />
+            <button type="submit">Pedir libro</button>
+          </form>
+
+          <form class="panel form-grid staff-only" id="bookForm">
+            <h3>Agregar libro</h3>
+            <input name="codigo" placeholder="Codigo" required />
+            <input name="titulo" placeholder="Titulo" required />
+            <input name="autor" placeholder="Autor" required />
+            <input name="anio" type="number" placeholder="Anio" required />
+            <input name="categoria" placeholder="Categoria" required />
+            <input name="programa" placeholder="Programa" />
+            <input name="editorial" placeholder="Editorial" />
+            <input name="isbn" placeholder="ISBN" />
+            <input name="totalEjemplares" type="number" placeholder="Ejemplares" value="1" required />
+            <input name="disponibles" type="number" placeholder="Disponibles" value="1" required />
+            <textarea name="descripcion" placeholder="Descripcion" required></textarea>
+            <button type="submit">Guardar libro</button>
+          </form>
+        </section>
+
+        <section class="view" id="prestamos">
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">Circulacion</p>
+              <h2>Prestamos activos</h2>
+            </div>
+            <button id="refreshLoans">Actualizar</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Usuario</th><th>Libro</th><th>Fecha</th><th>Accion</th></tr></thead>
+              <tbody id="loanRows"></tbody>
+            </table>
+          </div>
+          <form class="panel compact-form staff-only" id="loanForm">
+            <h3>Nuevo prestamo</h3>
+            <input name="docenteId" type="number" placeholder="ID de usuario" required />
+            <input name="libroId" type="number" placeholder="ID de libro" required />
+            <button type="submit">Registrar</button>
+          </form>
+        </section>
+
+        <section class="view" id="usuarios">
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">Administracion</p>
+              <h2>Usuarios</h2>
+            </div>
+            <input id="userSearch" type="search" placeholder="Buscar usuario" />
+          </div>
+          <div class="user-list" id="userList"></div>
+          <form class="panel compact-form admin-only" id="userForm">
+            <h3>Registrar usuario</h3>
+            <input name="nombre" placeholder="Nombre completo" required />
+            <input name="rfid" placeholder="RFID" />
+            <input name="iniciales" placeholder="Iniciales" />
+            <select name="tipoPersona">
+              <option value="DOCENTE">Docente</option>
+              <option value="ESTUDIANTE">Estudiante</option>
+              <option value="INVITADO">Invitado</option>
+            </select>
+            <button type="submit">Guardar usuario</button>
+          </form>
+        </section>
+
+        <section class="view" id="registros">
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">Actividad</p>
+              <h2>Registros</h2>
+            </div>
+            <button id="loadRecords">Cargar registros</button>
+          </div>
+          <div class="record-summary" id="recordSummary"></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Fecha</th><th>Tipo</th><th>Usuario</th><th>Detalle</th></tr></thead>
+              <tbody id="recordRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "name": "nuestra-biblioteca-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Frontend separado de Nuestra Biblioteca.",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

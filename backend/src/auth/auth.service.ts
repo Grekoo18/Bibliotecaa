@@ -1,0 +1,54 @@
+import {
+  Injectable,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
+import { PrismaService } from '../prisma.service';
+
+@Injectable()
+export class AuthService {
+  constructor(
+    private prisma: PrismaService,
+    private jwtService: JwtService,
+  ) {}
+
+  async login(email: string, password: string) {
+    let usuario;
+    try {
+      usuario = await this.prisma.usuario.findUnique({ where: { email } });
+    } catch {
+      throw new ServiceUnavailableException(
+        'No se pudo conectar con la base de datos. Revisa DATABASE_URL y que PostgreSQL este activo.',
+      );
+    }
+
+    if (!usuario || !usuario.password) {
+      throw new UnauthorizedException('Credenciales inválidas');
+    }
+
+    const valida = await bcrypt.compare(password, usuario.password);
+    if (!valida) {
+      throw new UnauthorizedException('Credenciales inválidas');
+    }
+
+    const payload = {
+      sub: usuario.id,
+      rol: usuario.rol,
+      email: usuario.email,
+      tipoPersona: usuario.tipoPersona,
+    };
+
+    return {
+      access_token: this.jwtService.sign(payload),
+      usuario: {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        email: usuario.email,
+        rol: usuario.rol,
+        tipoPersona: usuario.tipoPersona,
+      },
+    };
+  }
+}
