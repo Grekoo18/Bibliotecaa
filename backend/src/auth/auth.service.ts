@@ -18,7 +18,9 @@ export class AuthService {
   async login(email: string, password: string) {
     let usuario;
     try {
-      usuario = await this.prisma.usuario.findUnique({ where: { email } });
+      usuario = await this.prisma.usuario.findUnique({
+        where: { email: email.trim().toLowerCase() },
+      });
     } catch {
       throw new ServiceUnavailableException(
         'No se pudo conectar con la base de datos. Revisa DATABASE_URL y que PostgreSQL este activo.',
@@ -70,6 +72,10 @@ export class AuthService {
       throw new BadRequestException('Ya existe un usuario con ese correo');
     }
 
+    const allowedPersonTypes = ['CLIENTE', 'ESTUDIANTE', 'PROFESOR'];
+    const tipoPersona = allowedPersonTypes.includes(data.tipoPersona || '')
+      ? data.tipoPersona
+      : 'CLIENTE';
     const passwordHash = await bcrypt.hash(data.password, 10);
     const usuario = await this.prisma.usuario.create({
       data: {
@@ -77,7 +83,7 @@ export class AuthService {
         email,
         password: passwordHash,
         rol: 'usuario',
-        tipoPersona: data.tipoPersona || 'CLIENTE',
+        tipoPersona,
       },
     });
 
