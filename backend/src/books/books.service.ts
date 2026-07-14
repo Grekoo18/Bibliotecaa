@@ -14,6 +14,8 @@ export class BooksService {
   }
 
   async findAll(query?: string, category?: string) {
+    const year = query && !Number.isNaN(Number(query)) ? Number(query) : undefined;
+
     return this.prisma.book.findMany({
       where: {
         AND: [
@@ -23,6 +25,8 @@ export class BooksService {
                   { title: { contains: query, mode: 'insensitive' } },
                   { author: { name: { contains: query, mode: 'insensitive' } } },
                   { isbn: { contains: query, mode: 'insensitive' } },
+                  { publisher: { contains: query, mode: 'insensitive' } },
+                  ...(year ? [{ publicationYear: year }] : []),
                 ],
               }
             : {},

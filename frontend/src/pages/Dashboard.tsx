@@ -19,6 +19,20 @@ interface Loan {
   user?: { name: string };
 }
 
+interface Book {
+  id: number;
+  title: string;
+  isbn: string;
+  description?: string;
+  publicationYear?: number;
+  publisher?: string;
+  stock: number;
+  available: boolean;
+  author?: { name: string };
+  category?: { name: string };
+  _count?: { copies?: number };
+}
+
 function money(value?: string | number) {
   return `$${Number(value || 0).toFixed(2)}`;
 }
@@ -50,6 +64,16 @@ function LoansView() {
     loadLoans();
   }, [canManageLoans]);
 
+  const returnLoan = async (loanId: number) => {
+    setError('');
+    try {
+      const response = await api.patch(`/loans/${loanId}/return`);
+      setLoans((current) => current.map((loan) => (loan.id === loanId ? response.data : loan)));
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'No se pudo registrar la devolucion.');
+    }
+  };
+
   if (loading) return <div className="card">Cargando prestamos...</div>;
   if (error) return <div className="card" style={{ color: 'var(--color-error)' }}>{error}</div>;
 
@@ -73,12 +97,13 @@ function LoansView() {
               <th>Descuento</th>
               <th>Multa</th>
               <th>Total</th>
+              {canManageLoans && <th>Accion</th>}
             </tr>
           </thead>
           <tbody>
             {loans.length === 0 ? (
               <tr>
-                <td colSpan={canManageLoans ? 10 : 9}>No hay prestamos registrados.</td>
+                <td colSpan={canManageLoans ? 11 : 9}>No hay prestamos registrados.</td>
               </tr>
             ) : (
               loans.map((loan) => (
@@ -95,6 +120,17 @@ function LoansView() {
                     {money(loan.fineAmount)}
                   </td>
                   <td>{money(loan.finalCost)}</td>
+                  {canManageLoans && (
+                    <td>
+                      {['Activo', 'Renovacion pendiente'].includes(loan.status) ? (
+                        <button type="button" onClick={() => returnLoan(loan.id)}>
+                          Registrar devolucion
+                        </button>
+                      ) : (
+                        '-'
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))
             )}
@@ -105,6 +141,113 @@ function LoansView() {
       <p style={{ color: 'var(--color-charcoal-light)', marginTop: 'var(--spacing-md)' }}>
         La multa aplica solo a clientes cuando devuelven despues de la fecha limite: $1.00 por dia de retraso.
       </p>
+    </div>
+  );
+}
+
+function CatalogView() {
+  const { user } = useAuth();
+  const [books, setBooks] = useState<Book[]>([]);
+  const [query, setQuery] = useState('');
+  const [category, setCategory] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState('');
+  const canRequestLoan = ['CLIENTE', 'ESTUDIANTE', 'PROFESOR'].includes(user?.rol || '');
+
+  const categories = Array.from(
+    new Set(books.map((book) => book.category?.name).filter(Boolean)),
+  ) as string[];
+
+  const loadBooks = async () => {
+    setLoading(true);
+    setMessage('');
+    try {
+      const params = new URLSearchParams();
+      if (query.trim()) params.set('q', query.trim());
+      if (category) params.set('category', category);
+      const response = await api.get(`/books${params.toString() ? `?${params}` : ''}`);
+      setBooks(response.data);
+    } catch (err: any) {
+      setMessage(err?.response?.data?.message || 'No se pudo cargar el catalogo.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadBooks();
+  }, []);
+
+  const requestLoan = async (bookId: number) => {
+    setMessage('');
+    try {
+      await api.post('/loans/request', { bookId });
+      setMessage('Solicitud de prestamo registrada.');
+    } catch (err: any) {
+      setMessage(err?.response?.data?.message || 'No se pudo solicitar el prestamo.');
+    }
+  };
+
+  return (
+    <div className="card" style={{ padding: 'var(--spacing-xl)' }}>
+      <h3 style={{ fontFamily: 'var(--font-sans)', color: 'var(--color-forest)' }}>Catalogo</h3>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          loadBooks();
+        }}
+        style={{ display: 'grid', gridTemplateColumns: 'minmax(220px, 1fr) 220px auto', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-lg)' }}
+      >
+        <input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Buscar por nombre, autor, editorial o anio"
+        />
+        <select value={category} onChange={(event) => setCategory(event.target.value)}>
+          <option value="">Todas las categorias</option>
+          {categories.map((item) => (
+            <option key={item} value={item}>{item}</option>
+          ))}
+        </select>
+        <button type="submit">Buscar</button>
+      </form>
+
+      {message && <p style={{ color: message.includes('No se') ? 'var(--color-error)' : 'var(--color-success)' }}>{message}</p>}
+      {loading ? (
+        <p>Cargando libros...</p>
+      ) : (
+        <>
+          <p style={{ color: 'var(--color-charcoal-light)' }}>{books.length} libros encontrados</p>
+          <div className="book-grid">
+            {books.map((book) => {
+              const availableCopies = Number(book._count?.copies || 0);
+              return (
+                <article className="book-card" key={book.id}>
+                  <h4>{book.title}</h4>
+                  <p>{book.author?.name || 'Autor no registrado'}</p>
+                  <p>{book.description || 'Sin descripcion.'}</p>
+                  <div className="book-meta">
+                    <span>{book.category?.name || 'Sin categoria'}</span>
+                    <span>{book.publisher || 'Sin editorial'}</span>
+                    <span>{book.publicationYear || 'Sin anio'}</span>
+                    <span>{book.isbn}</span>
+                  </div>
+                  <strong>{availableCopies} disponibles</strong>
+                  {canRequestLoan && (
+                    <button
+                      type="button"
+                      disabled={availableCopies <= 0}
+                      onClick={() => requestLoan(book.id)}
+                    >
+                      Pedir libro
+                    </button>
+                  )}
+                </article>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -166,10 +309,7 @@ export default function Dashboard() {
 
         <Routes>
           <Route path="/" element={
-            <div className="card" style={{ padding: 'var(--spacing-xl)' }}>
-              <h3 style={{ fontFamily: 'var(--font-sans)', color: 'var(--color-forest)' }}>Libros Recientes</h3>
-              <p>El catalogo se mostrara aqui proximamente.</p>
-            </div>
+            <CatalogView />
           } />
           <Route path="/mis-prestamos" element={<LoansView />} />
           <Route path="/perfil" element={
@@ -223,6 +363,30 @@ export default function Dashboard() {
         .fine-cell {
           color: var(--color-error);
           font-weight: 700;
+        }
+        .book-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+          gap: var(--spacing-md);
+        }
+        .book-card {
+          display: grid;
+          gap: var(--spacing-sm);
+          padding: var(--spacing-md);
+          border: 1px solid var(--color-ivory-dark);
+          border-radius: var(--radius-md);
+          background: var(--color-white);
+        }
+        .book-card h4,
+        .book-card p {
+          margin: 0;
+        }
+        .book-meta {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.35rem;
+          color: var(--color-charcoal-light);
+          font-size: 0.85rem;
         }
       `}</style>
     </div>
