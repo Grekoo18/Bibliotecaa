@@ -24,25 +24,25 @@ export class LoansController {
   }
 
   // Bibliotecarios administran
-  @Roles('ADMIN', 'SUBADMIN', 'BIBLIOTECARIO')
+  @Roles('ADMIN', 'BIBLIOTECARIO')
   @Get()
   getAllLoans() {
     return this.loansService.getAllLoans();
   }
 
-  @Roles('ADMIN', 'SUBADMIN', 'BIBLIOTECARIO')
+  @Roles('ADMIN', 'BIBLIOTECARIO')
   @Patch(':id/approve')
   approveLoan(@Param('id') id: string, @Body() dto: ApproveLoanDto, @Req() req: Request & { user: any }) {
     return this.loansService.approveLoan(+id, req.user.id, dto);
   }
 
-  @Roles('ADMIN', 'SUBADMIN', 'BIBLIOTECARIO')
+  @Roles('ADMIN', 'BIBLIOTECARIO')
   @Patch(':id/reject')
   rejectLoan(@Param('id') id: string, @Body('reason') reason: string, @Req() req: Request & { user: any }) {
     return this.loansService.rejectLoan(+id, req.user.id, reason);
   }
 
-  @Roles('ADMIN', 'SUBADMIN', 'BIBLIOTECARIO')
+  @Roles('ADMIN', 'BIBLIOTECARIO')
   @Patch(':id/return')
   returnLoan(@Param('id') id: string, @Req() req: Request & { user: any }) {
     return this.loansService.returnLoan(+id, req.user.id);

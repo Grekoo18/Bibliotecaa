@@ -24,13 +24,19 @@ DATABASE_URL=postgresql://usuario:clave@localhost:5432/biblioteca
 JWT_SECRET=dev-secret-local-change-me
 JWT_EXPIRES_IN=8h
 PORT=3001
+ADMIN_EMAIL=admin@biblioteca.local
+ADMIN_PASSWORD=Admin123!
+BIBLIOTECARIO_EMAIL=bibliotecario@biblioteca.local
+BIBLIOTECARIO_PASSWORD=Biblio123!
+USUARIO_EMAIL=usuario@biblioteca.local
+USUARIO_PASSWORD=Usuario123!
 ```
 
 ## Migraciones
 
 ```bash
 npx prisma generate
-npx prisma db push
+npx prisma migrate deploy
 ```
 
 ## Crear usuarios de acceso
@@ -41,20 +47,18 @@ Despues de configurar `DATABASE_URL`, puedes preparar todo con:
 npm run setup:db
 ```
 
-Ese comando crea las tablas, roles, usuarios y libros de muestra. Si prefieres hacerlo paso a paso:
+Ese comando crea las tablas, los tres usuarios y 5 libros de muestra. Si prefieres hacerlo paso a paso:
 
 ```bash
-npx prisma db push
-npm run seed
+npx prisma migrate deploy
+npm run seed:users
+npm run seed:books
 ```
 
 Credenciales por defecto:
 
 ```text
-Administrador: admin@biblioteca.local / Password123!
-Subadministrador: subadmin@biblioteca.local / Password123!
-Bibliotecario: bibliotecario@biblioteca.local / Password123!
-Cliente: cliente@biblioteca.local / Password123!
-Profesor: profesor@biblioteca.local / Password123!
-Estudiante: estudiante@biblioteca.local / Password123!
+Administrador: admin@biblioteca.local / Admin123!
+Bibliotecario: bibliotecario@biblioteca.local / Biblio123!
+Usuario: usuario@biblioteca.local / Usuario123!
 ```

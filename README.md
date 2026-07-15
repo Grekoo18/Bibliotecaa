@@ -34,19 +34,18 @@ Ese comando crea tablas, usuarios y 5 libros de muestra.
 Credenciales:
 
 ```text
-Administrador: admin@biblioteca.local / Password123!
-Subadministrador: subadmin@biblioteca.local / Password123!
-Bibliotecario: bibliotecario@biblioteca.local / Password123!
-Cliente: cliente@biblioteca.local / Password123!
-Profesor: profesor@biblioteca.local / Password123!
-Estudiante: estudiante@biblioteca.local / Password123!
+Administrador: admin@biblioteca.local / Admin123!
+Bibliotecario: bibliotecario@biblioteca.local / Biblio123!
+Cliente: usuario@biblioteca.local / Usuario123!
+Maestro: maestro@biblioteca.local / Maestro123!
+Estudiante: estudiante@biblioteca.local / Estudiante123!
 ```
 
 Reglas incluidas:
 
 ```text
 Cliente: puede pedir libros, devolverlos y tiene prestamo de 10 dias con multa por retraso.
-Profesor: puede pedir libros con prestamo gratuito.
+Maestro: puede pedir libros con prestamo gratuito.
 Estudiante: puede pedir libros con 50% de descuento.
 Bibliotecario: puede agregar, retirar libros, registrar prestamos y devoluciones.
 Administrador: puede ver y administrar usuarios, catalogo, prestamos y registros.
