@@ -8,8 +8,54 @@ import { addDays, isAfter } from 'date-fns';
 export class LoansService {
   constructor(private prisma: PrismaService) {}
 
+  private readonly baseLoanCost = 2;
+  private readonly finePerLateDay = 1;
+
+  private getLoanRule(roleName: string) {
+    if (roleName === 'PROFESOR') {
+      return {
+        days: 30,
+        discountPercent: 100,
+        finalCost: 0,
+        documentType: 'Credencial docente',
+      };
+    }
+
+    if (roleName === 'ESTUDIANTE') {
+      return {
+        days: 15,
+        discountPercent: 50,
+        finalCost: this.baseLoanCost * 0.5,
+        documentType: 'Carnet estudiantil',
+      };
+    }
+
+    return {
+      days: 10,
+      discountPercent: 0,
+      finalCost: this.baseLoanCost,
+      documentType: 'Cedula',
+    };
+  }
+
+  private calculateLateDays(returnDate: Date, dueDate: Date) {
+    if (!isAfter(returnDate, dueDate)) return 0;
+    const diffTime = returnDate.getTime() - dueDate.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  }
+
   async requestLoan(userId: number, dto: RequestLoanDto) {
     return this.prisma.$transaction(async (tx) => {
+      const activeCount = await tx.loan.count({
+        where: {
+          userId,
+          status: { in: ['Pendiente', 'Activo', 'Renovacion pendiente'] },
+        },
+      });
+      if (activeCount >= 3) {
+        throw new BadRequestException('Ningun usuario puede tener mas de tres prestamos activos.');
+      }
+
       // 1. Validar que no tenga ya un préstamo activo o pendiente de este libro
       const existing = await tx.loan.findFirst({
         where: {
@@ -36,6 +82,7 @@ export class LoansService {
           userId,
           bookId: dto.bookId,
           status: 'Pendiente',
+          documentType: dto.documentType,
         },
         include: { book: true },
       });
@@ -44,7 +91,10 @@ export class LoansService {
 
   async approveLoan(loanId: number, adminId: number, dto: ApproveLoanDto) {
     return this.prisma.$transaction(async (tx) => {
-      const loan = await tx.loan.findUnique({ where: { id: loanId } });
+      const loan = await tx.loan.findUnique({
+        where: { id: loanId },
+        include: { user: { include: { role: true } } },
+      });
       if (!loan) throw new NotFoundException('Solicitud no encontrada');
       if (loan.status !== 'Pendiente') throw new BadRequestException('La solicitud no está en estado pendiente');
 
@@ -52,8 +102,9 @@ export class LoansService {
       if (!copy || copy.bookId !== loan.bookId) throw new BadRequestException('Ejemplar inválido');
       if (copy.status !== 'DISPONIBLE') throw new BadRequestException('El ejemplar no está disponible');
 
-      // Calcular fecha de devolución (ej: 7 días por defecto)
-      const dueDate = addDays(new Date(), 7);
+      const rule = this.getLoanRule(loan.user.role.name);
+      const loanDate = new Date();
+      const dueDate = addDays(loanDate, rule.days);
 
       // Actualizar ejemplar
       await tx.bookCopy.update({
@@ -67,8 +118,14 @@ export class LoansService {
         data: {
           status: 'Activo',
           bookCopyId: copy.id,
-          loanDate: new Date(),
+          loanDate,
           dueDate,
+          documentType: dto.documentType || loan.documentType || rule.documentType,
+          baseCost: this.baseLoanCost,
+          discountPercent: rule.discountPercent,
+          finalCost: rule.finalCost,
+          fineAmount: 0,
+          approvedById: adminId,
         },
         include: { book: true, bookCopy: true, user: true },
       });
@@ -90,16 +147,9 @@ export class LoansService {
       }
 
       const returnDate = new Date();
-      let status = 'Devuelto';
-      let fineAmount = 0;
-
-      if (loan.dueDate && isAfter(returnDate, loan.dueDate)) {
-        status = 'Devuelto con retraso';
-        // Ej: $1 por día de retraso (sólo ejemplo simplificado)
-        const diffTime = Math.abs(returnDate.getTime() - loan.dueDate.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-        fineAmount = diffDays * 1.0; 
-      }
+      const lateDays = loan.dueDate ? this.calculateLateDays(returnDate, loan.dueDate) : 0;
+      const fineAmount = lateDays * this.finePerLateDay;
+      const status = fineAmount > 0 ? 'Devuelto con retraso' : 'Devuelto';
 
       if (loan.bookCopyId) {
         await tx.bookCopy.update({
@@ -114,6 +164,7 @@ export class LoansService {
           status,
           returnDate,
           fineAmount,
+          finalCost: Number(loan.finalCost) + fineAmount,
         },
       });
     });

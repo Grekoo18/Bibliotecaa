@@ -7,5 +7,9 @@ export class ApproveLoanDto {
 
   @IsOptional()
   @IsString()
+  documentType?: string;
+
+  @IsOptional()
+  @IsString()
   notes?: string;
 }

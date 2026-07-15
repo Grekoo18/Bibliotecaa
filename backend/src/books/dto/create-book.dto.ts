@@ -5,9 +5,13 @@ export class CreateBookDto {
   @IsNotEmpty()
   title: string;
 
+  @IsOptional()
   @IsInt()
-  @IsNotEmpty()
-  authorId: number;
+  authorId?: number;
+
+  @IsOptional()
+  @IsString()
+  authorName?: string;
 
   @IsString()
   @IsNotEmpty()
@@ -22,9 +26,18 @@ export class CreateBookDto {
   @Min(1000)
   publicationYear?: number;
 
+  @IsOptional()
   @IsInt()
-  @IsNotEmpty()
-  categoryId: number;
+  categoryId?: number;
+
+  @IsOptional()
+  @IsString()
+  categoryName?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  stock?: number;
 
   @IsOptional()
   @IsString()

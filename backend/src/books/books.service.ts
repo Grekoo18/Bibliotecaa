@@ -8,8 +8,56 @@ export class BooksService {
   constructor(private prisma: PrismaService) {}
 
   async create(data: CreateBookDto) {
-    return this.prisma.book.create({
-      data,
+    return this.prisma.$transaction(async (tx) => {
+      const author = data.authorId
+        ? await tx.author.findUnique({ where: { id: data.authorId } })
+        : data.authorName
+          ? await tx.author.findFirst({ where: { name: data.authorName } })
+          : null;
+      const finalAuthor =
+        author ?? (data.authorName ? await tx.author.create({ data: { name: data.authorName } }) : null);
+
+      const category = data.categoryId
+        ? await tx.category.findUnique({ where: { id: data.categoryId } })
+        : data.categoryName
+          ? await tx.category.upsert({
+              where: { name: data.categoryName },
+              update: {},
+              create: { name: data.categoryName },
+            })
+          : null;
+
+      if (!finalAuthor || !category) {
+        throw new NotFoundException('Debes indicar un autor y una categoria validos');
+      }
+
+      const stock = data.stock || 1;
+      const book = await tx.book.create({
+        data: {
+          title: data.title,
+          isbn: data.isbn,
+          publisher: data.publisher,
+          publicationYear: data.publicationYear,
+          description: data.description,
+          imageUrl: data.imageUrl,
+          stock,
+          available: stock > 0,
+          authorId: finalAuthor.id,
+          categoryId: category.id,
+        },
+      });
+
+      for (let index = 1; index <= stock; index += 1) {
+        await tx.bookCopy.create({
+          data: {
+            bookId: book.id,
+            code: `LIB-${book.id}-${index}`,
+            status: 'DISPONIBLE',
+          },
+        });
+      }
+
+      return book;
     });
   }
 
