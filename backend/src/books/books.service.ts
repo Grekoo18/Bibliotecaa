@@ -70,7 +70,6 @@ export class BooksService {
         OR: [
           { title: { contains: term, mode: 'insensitive' } },
           { author: { name: { contains: term, mode: 'insensitive' } } },
-          { category: { name: { contains: term, mode: 'insensitive' } } },
           { isbn: { contains: term, mode: 'insensitive' } },
           { publisher: { contains: term, mode: 'insensitive' } },
           ...(year ? [{ publicationYear: year }] : []),
