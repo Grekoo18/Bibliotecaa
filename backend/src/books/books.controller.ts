@@ -12,7 +12,7 @@ export class BooksController {
   constructor(private readonly booksService: BooksService) {}
 
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('BIBLIOTECARIO')
+  @Roles('ADMIN', 'BIBLIOTECARIO')
   @Post()
   create(@Body() createBookDto: CreateBookDto) {
     return this.booksService.create(createBookDto);

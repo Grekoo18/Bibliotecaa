@@ -4,8 +4,4 @@ export class RequestLoanDto {
   @IsInt()
   @IsNotEmpty()
   bookId: number;
-
-  @IsOptional()
-  @IsString()
-  documentType?: string;
 }

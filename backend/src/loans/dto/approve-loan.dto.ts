@@ -8,8 +8,4 @@ export class ApproveLoanDto {
   @IsOptional()
   @IsString()
   notes?: string;
-
-  @IsOptional()
-  @IsString()
-  documentType?: string;
 }

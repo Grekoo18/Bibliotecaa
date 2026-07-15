@@ -44,7 +44,7 @@ export class LoansController {
 
   @Roles('ADMIN', 'BIBLIOTECARIO')
   @Patch(':id/return')
-  returnLoan(@Param('id') id: string, @Req() req: Request & { user: any }) {
-    return this.loansService.returnLoan(+id, req.user.id);
+  returnLoan(@Param('id') id: string) {
+    return this.loansService.returnLoan(+id);
   }
 }

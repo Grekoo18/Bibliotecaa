@@ -8,17 +8,11 @@ import * as bcrypt from 'bcrypt';
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  private withoutPassword<T extends { password?: string }>(user: T) {
-    const { password, ...safeUser } = user;
-    return safeUser;
-  }
-
   async findAll() {
-    const users = await this.prisma.user.findMany({
+    return this.prisma.user.findMany({
       include: { role: true },
       orderBy: { id: 'asc' },
     });
-    return users.map((user) => this.withoutPassword(user));
   }
 
   async findOne(id: number) {
@@ -27,12 +21,12 @@ export class UsersService {
       include: { role: true },
     });
     if (!user) throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
-    return this.withoutPassword(user);
+    return user;
   }
 
   async create(data: CreateUserDto) {
     const passwordHash = await bcrypt.hash(data.password, 10);
-    const user = await this.prisma.user.create({
+    return this.prisma.user.create({
       data: {
         name: data.name,
         email: data.email,
@@ -41,7 +35,6 @@ export class UsersService {
       },
       include: { role: true },
     });
-    return this.withoutPassword(user);
   }
 
   async update(id: number, data: UpdateUserDto) {
@@ -50,7 +43,7 @@ export class UsersService {
       passwordHash = await bcrypt.hash(data.password, 10);
     }
     
-    const user = await this.prisma.user.update({
+    return this.prisma.user.update({
       where: { id },
       data: {
         ...data,
@@ -58,7 +51,6 @@ export class UsersService {
       },
       include: { role: true },
     });
-    return this.withoutPassword(user);
   }
 
   async remove(id: number) {
