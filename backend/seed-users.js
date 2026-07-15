@@ -4,53 +4,52 @@ const bcrypt = require('bcrypt');
 const { PrismaClient } = require('@prisma/client');
 const { PrismaPg } = require('@prisma/adapter-pg');
 
+const roles = [
+  'ADMIN',
+  'SUBADMIN',
+  'BIBLIOTECARIO',
+  'CLIENTE',
+  'PROFESOR',
+  'ESTUDIANTE',
+  'INVITADO',
+];
+
 const users = [
   {
-    nombre: 'Administrador',
-    iniciales: 'ADM',
+    name: 'Administrador',
     email: process.env.ADMIN_EMAIL || 'admin@biblioteca.local',
     password: process.env.ADMIN_PASSWORD || 'Admin123!',
-    rol: 'admin',
+    roleName: 'ADMIN',
   },
   {
-    nombre: 'Bibliotecario',
-    iniciales: 'BIB',
+    name: 'Bibliotecario Jefe',
     email: process.env.BIBLIOTECARIO_EMAIL || 'bibliotecario@biblioteca.local',
     password: process.env.BIBLIOTECARIO_PASSWORD || 'Biblio123!',
-    rol: 'bibliotecario',
-    tipoPersona: 'CLIENTE',
+    roleName: 'BIBLIOTECARIO',
   },
   {
-    nombre: 'Subadministrador',
-    iniciales: 'SUB',
+    name: 'Subadministrador',
     email: process.env.SUBADMIN_EMAIL || 'subadmin@biblioteca.local',
     password: process.env.SUBADMIN_PASSWORD || 'Subadmin123!',
-    rol: 'subadmin',
-    tipoPersona: 'CLIENTE',
+    roleName: 'SUBADMIN',
   },
   {
-    nombre: 'Cliente',
-    iniciales: 'USR',
+    name: 'Cliente',
     email: process.env.USUARIO_EMAIL || 'usuario@biblioteca.local',
     password: process.env.USUARIO_PASSWORD || 'Usuario123!',
-    rol: 'usuario',
-    tipoPersona: 'CLIENTE',
+    roleName: 'CLIENTE',
   },
   {
-    nombre: 'Profesor',
-    iniciales: 'PRO',
+    name: 'Profesor',
     email: process.env.PROFESOR_EMAIL || 'maestro@biblioteca.local',
     password: process.env.PROFESOR_PASSWORD || 'Maestro123!',
-    rol: 'usuario',
-    tipoPersona: 'PROFESOR',
+    roleName: 'PROFESOR',
   },
   {
-    nombre: 'Estudiante',
-    iniciales: 'EST',
+    name: 'Estudiante',
     email: process.env.ESTUDIANTE_EMAIL || 'estudiante@biblioteca.local',
     password: process.env.ESTUDIANTE_PASSWORD || 'Estudiante123!',
-    rol: 'usuario',
-    tipoPersona: 'ESTUDIANTE',
+    roleName: 'ESTUDIANTE',
   },
 ];
 
@@ -64,24 +63,33 @@ async function main() {
     adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
   });
 
+  for (const roleName of roles) {
+    await prisma.role.upsert({
+      where: { name: roleName },
+      update: {},
+      create: { name: roleName, description: `Rol de ${roleName}` },
+    });
+  }
+
   for (const user of users) {
+    const role = await prisma.role.findUnique({ where: { name: user.roleName } });
+    if (!role) continue;
+
     const hashedPassword = await bcrypt.hash(user.password, 10);
-    await prisma.usuario.upsert({
+    await prisma.user.upsert({
       where: { email: user.email },
       update: {
-        nombre: user.nombre,
-        iniciales: user.iniciales,
+        name: user.name,
         password: hashedPassword,
-        rol: user.rol,
-        tipoPersona: user.tipoPersona || 'CLIENTE',
+        roleId: role.id,
+        status: 'ACTIVE',
       },
       create: {
-        nombre: user.nombre,
-        iniciales: user.iniciales,
+        name: user.name,
         email: user.email,
         password: hashedPassword,
-        rol: user.rol,
-        tipoPersona: user.tipoPersona || 'CLIENTE',
+        roleId: role.id,
+        status: 'ACTIVE',
       },
     });
   }
@@ -90,19 +98,12 @@ async function main() {
 
   console.log('Usuarios de acceso listos.');
   for (const user of users) {
-    console.log(`${user.rol}: ${user.email} / ${user.password}`);
+    console.log(`${user.roleName}: ${user.email} / ${user.password}`);
   }
 }
 
 main().catch((error) => {
   console.error('No se pudieron crear los usuarios.');
-  if (
-    error.message.includes('does not exist in the current database') ||
-    error.message.includes('not available')
-  ) {
-    console.error('Primero crea las tablas con: npx prisma migrate deploy');
-    console.error('O ejecuta todo junto con: npm run setup:db');
-  }
   console.error(error.message);
   process.exit(1);
 });
