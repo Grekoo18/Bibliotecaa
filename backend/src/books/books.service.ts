@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
@@ -62,22 +63,24 @@ export class BooksService {
   }
 
   async findAll(query?: string, category?: string) {
-    const year = query && !Number.isNaN(Number(query)) ? Number(query) : undefined;
+    const terms = query?.trim().split(/\s+/).filter(Boolean) ?? [];
+    const searchFilters: Prisma.BookWhereInput[] = terms.map((term) => {
+      const year = !Number.isNaN(Number(term)) ? Number(term) : undefined;
+      return {
+        OR: [
+          { title: { contains: term, mode: 'insensitive' } },
+          { author: { name: { contains: term, mode: 'insensitive' } } },
+          { isbn: { contains: term, mode: 'insensitive' } },
+          { publisher: { contains: term, mode: 'insensitive' } },
+          ...(year ? [{ publicationYear: year }] : []),
+        ],
+      };
+    });
 
     return this.prisma.book.findMany({
       where: {
         AND: [
-          query
-            ? {
-                OR: [
-                  { title: { contains: query, mode: 'insensitive' } },
-                  { author: { name: { contains: query, mode: 'insensitive' } } },
-                  { isbn: { contains: query, mode: 'insensitive' } },
-                  { publisher: { contains: query, mode: 'insensitive' } },
-                  ...(year ? [{ publicationYear: year }] : []),
-                ],
-              }
-            : {},
+          ...searchFilters,
           category
             ? { category: { name: { equals: category, mode: 'insensitive' } } }
             : {},
